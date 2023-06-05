@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
@@ -32,13 +33,12 @@ func NewWeatherRemoteRepository(baseLogger domain.Logger, client *http.Client, a
 	}
 }
 
-func (r *weatherRemoteRepository) GetCurrentWeather() (*domain.Weather, error) {
+func (r *weatherRemoteRepository) GetCurrentWeather(ctx context.Context) (*domain.Weather, error) {
 	url := fmt.Sprintf("%s?lat=%s&lon=%s&units=metric&appid=%s", r.apiUrl, r.lat, r.long, r.apiKey)
 	logger := r.baseLogger.WithFields(loggerPkg.Fields{"url": url})
 	now := time.Now().UTC()
 
-	//No need pass ctx for remote repository
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		logger.WithFields(loggerPkg.Fields{"error": err}).Errorf("error when create request object")
 		return nil, err

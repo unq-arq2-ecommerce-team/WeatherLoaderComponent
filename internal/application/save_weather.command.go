@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 )
 
@@ -12,6 +13,6 @@ func NewSaveWeatherCommand(weatherRepository domain.WeatherLocalRepository) *Sav
 	return &SaveWeatherCommand{weatherRepository: weatherRepository}
 }
 
-func (u *SaveWeatherCommand) Do(weather *domain.Weather) error {
-	return u.weatherRepository.Save(weather)
+func (u *SaveWeatherCommand) Do(ctx context.Context, weather *domain.Weather) error {
+	return u.weatherRepository.Save(ctx, weather)
 }

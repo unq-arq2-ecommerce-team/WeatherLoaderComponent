@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 )
 
@@ -18,14 +19,14 @@ func NewSaveCurrentWeatherUseCase(baseLogger domain.Logger, getCurrentWeatherQue
 	}
 }
 
-func (u *SaveCurrentWeatherUseCase) Do() error {
-	weather, err := u.GetCurrentWeatherQuery.Do()
+func (u *SaveCurrentWeatherUseCase) Do(ctx context.Context) error {
+	weather, err := u.GetCurrentWeatherQuery.Do(ctx)
 	logger := u.baseLogger.WithFields(domain.LoggerFields{"weather": weather})
 	if err != nil {
 		logger.WithFields(domain.LoggerFields{"error": err}).Error("error when get current weather")
 		return err
 	}
-	if err := u.SaveWeatherCommand.Do(weather); err != nil {
+	if err := u.SaveWeatherCommand.Do(ctx, weather); err != nil {
 		logger.WithFields(domain.LoggerFields{"error": err}).Error("error when save weather")
 		return err
 	}

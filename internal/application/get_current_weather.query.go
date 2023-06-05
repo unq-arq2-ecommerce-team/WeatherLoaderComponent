@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 )
 
@@ -12,6 +13,6 @@ func NewGetCurrentWeatherUseCase(weatherRepository domain.WeatherRemoteRepositor
 	return &GetCurrentWeatherQuery{weatherRepository: weatherRepository}
 }
 
-func (u *GetCurrentWeatherQuery) Do() (*domain.Weather, error) {
-	return u.weatherRepository.GetCurrentWeather()
+func (u *GetCurrentWeatherQuery) Do(ctx context.Context) (*domain.Weather, error) {
+	return u.weatherRepository.GetCurrentWeather(ctx)
 }

@@ -23,7 +23,7 @@ func main() {
 	})
 
 	mongoDb := _mongo.Connect(context.Background(), logger, conf.MongoURI, conf.MongoDatabase)
-	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(mongoDb, conf.Weather, logger)
+	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(mongoDb, conf.MongoTimeout, conf.Weather, logger)
 
 	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase)
 
@@ -38,7 +38,7 @@ func startTickerOfSaveCurrentWeatherUseCase(baseLogger domain.Logger, tickerLoop
 	logger.Infof("starting ticker loop with loop duration %s", tickerLoopTime.String())
 
 	useCaseDoAndLogErrFn := func() {
-		if err := useCase.Do(); err != nil {
+		if err := useCase.Do(context.Background()); err != nil {
 			logger.WithFields(domain.LoggerFields{"error": err}).Errorf("Error saving current weather")
 		}
 	}
@@ -50,8 +50,8 @@ func startTickerOfSaveCurrentWeatherUseCase(baseLogger domain.Logger, tickerLoop
 	}
 }
 
-func createSaveCurrentWeatherUseCase(mongoConn *mongo.Database, weatherConf config.Weather, logger domain.Logger) *app.SaveCurrentWeatherUseCase {
-	localRepository := _mongo.NewWeatherLocalRepository(mongoConn, logger)
+func createSaveCurrentWeatherUseCase(mongoConn *mongo.Database, mongoTimeout time.Duration, weatherConf config.Weather, logger domain.Logger) *app.SaveCurrentWeatherUseCase {
+	localRepository := _mongo.NewWeatherLocalRepository(mongoConn, logger, mongoTimeout)
 	remoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(), weatherConf.ApiKey, weatherConf.ApiUrl, weatherConf.Lat, weatherConf.Long)
 	getCurrentWeatherQuery := app.NewGetCurrentWeatherUseCase(remoteRepository)
 	saveWeatherQuery := app.NewSaveWeatherCommand(localRepository)

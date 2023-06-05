@@ -1,9 +1,11 @@
 package domain
 
+import "context"
+
 type WeatherLocalRepository interface {
-	Save(weather *Weather) error
+	Save(context.Context, *Weather) error
 }
 
 type WeatherRemoteRepository interface {
-	GetCurrentWeather() (*Weather, error)
+	GetCurrentWeather(context.Context) (*Weather, error)
 }
