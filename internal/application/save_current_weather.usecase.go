@@ -1,14 +1,18 @@
 package application
 
-import "log"
+import (
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
+)
 
 type SaveCurrentWeatherUseCase struct {
+	baseLogger             domain.Logger
 	GetCurrentWeatherQuery *GetCurrentWeatherQuery
 	SaveWeatherCommand     *SaveWeatherCommand
 }
 
-func NewSaveCurrentWeatherUseCase(getCurrentWeatherQuery *GetCurrentWeatherQuery, saveWeatherCommand *SaveWeatherCommand) *SaveCurrentWeatherUseCase {
+func NewSaveCurrentWeatherUseCase(baseLogger domain.Logger, getCurrentWeatherQuery *GetCurrentWeatherQuery, saveWeatherCommand *SaveWeatherCommand) *SaveCurrentWeatherUseCase {
 	return &SaveCurrentWeatherUseCase{
+		baseLogger:             baseLogger.WithFields(domain.LoggerFields{"useCase": "saveCurrentWeatherUseCase"}),
 		GetCurrentWeatherQuery: getCurrentWeatherQuery,
 		SaveWeatherCommand:     saveWeatherCommand,
 	}
@@ -16,9 +20,15 @@ func NewSaveCurrentWeatherUseCase(getCurrentWeatherQuery *GetCurrentWeatherQuery
 
 func (u *SaveCurrentWeatherUseCase) Do() error {
 	weather, err := u.GetCurrentWeatherQuery.Do()
+	logger := u.baseLogger.WithFields(domain.LoggerFields{"weather": weather})
 	if err != nil {
-		log.Println("Error getting current weather: ", err)
+		logger.WithFields(domain.LoggerFields{"error": err}).Error("error when get current weather")
 		return err
 	}
-	return u.SaveWeatherCommand.Do(weather)
+	if err := u.SaveWeatherCommand.Do(weather); err != nil {
+		logger.WithFields(domain.LoggerFields{"error": err}).Error("error when save weather")
+		return err
+	}
+	logger.Info("successful save current weather use case")
+	return nil
 }

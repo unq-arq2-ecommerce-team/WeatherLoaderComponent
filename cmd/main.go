@@ -2,86 +2,58 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"os"
-	"time"
-
-	"github.com/joho/godotenv"
 	app "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/application"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 	infra "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
+	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/http"
+	_mongo "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/mongo"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
 )
 
 func main() {
-	logger := log.Default()
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	conf := config.LoadConfig()
+	logger := loggerPkg.New(&loggerPkg.Config{
+		ServiceName:     config.ServiceName,
+		EnvironmentName: conf.Environment,
+		LogLevel:        conf.LogLevel,
+		LogFormat:       loggerPkg.JsonFormat,
+	})
 
-	mongoDbName, mongoConn := createMongoAtlasConnection()
-	defer func() {
-		log.Println("Closing mongo connection")
-		if err = mongoConn.Disconnect(context.Background()); err != nil {
-			panic(err)
+	mongoDb := _mongo.Connect(context.Background(), logger, conf.MongoURI, conf.MongoDatabase)
+	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(mongoDb, conf.Weather, logger)
+
+	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase)
+
+	_app := infra.NewGinApplication(conf, logger)
+	logger.Fatal(_app.Run())
+}
+
+// startTickerOfSaveCurrentWeatherUseCase init a job which runs periodically use case param every duration of tickerLoopTime param
+func startTickerOfSaveCurrentWeatherUseCase(baseLogger domain.Logger, tickerLoopTime time.Duration, useCase *app.SaveCurrentWeatherUseCase) {
+	logger := baseLogger.WithFields(domain.LoggerFields{"logger": "ticker"})
+	ticker := time.NewTicker(tickerLoopTime)
+	logger.Infof("starting ticker loop with loop duration %s", tickerLoopTime.String())
+
+	useCaseDoAndLogErrFn := func() {
+		if err := useCase.Do(); err != nil {
+			logger.WithFields(domain.LoggerFields{"error": err}).Errorf("Error saving current weather")
 		}
-	}()
-
-	ticker := time.NewTicker(5 * time.Minute)
-
-	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(mongoConn, mongoDbName, logger)
+	}
 
 	// Start off by calling API immediately.
-	err = saveCurrentWeatherUseCase.Do()
-	if err != nil {
-		logger.Println("Error saving current weather:", err)
+	useCaseDoAndLogErrFn()
+	for range ticker.C {
+		useCaseDoAndLogErrFn()
 	}
-	go func() {
-		for range ticker.C {
-			err = saveCurrentWeatherUseCase.Do()
-			if err != nil {
-				logger.Println("Error saving current weather:", err)
-			}
-		}
-	}()
-	app := infra.NewGinApplication()
-	logger.Fatal(app.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))))
 }
 
-func createMongoAtlasConnection() (string, *mongo.Client) {
-	mongoUri := os.Getenv("MONGO_URI")
-	mongoDbName := os.Getenv("MONGO_DATABASE")
-	if mongoUri == "" || mongoDbName == "" {
-		panic("env vars MONGO_URI or MONGO_DATABASE not found")
-	}
-	mongoConn, err := createConnection(mongoUri)
-
-	if err != nil {
-		panic(err)
-	}
-	return mongoDbName, mongoConn
-}
-
-func createSaveCurrentWeatherUseCase(mongoConn *mongo.Client, mongoDbName string, logger *log.Logger) *app.SaveCurrentWeatherUseCase {
-	apiUrl := os.Getenv("API_URL")
-	lat := os.Getenv("LAT")
-	long := os.Getenv("LONG")
-	apiKey := os.Getenv("API_KEY")
-	localRepository := infra.NewWeatherLocalRepository(mongoConn, mongoDbName, logger)
-	remoteRepository := infra.NewWeatherRemoteRepository(apiKey, apiUrl, lat, long, logger)
+func createSaveCurrentWeatherUseCase(mongoConn *mongo.Database, weatherConf config.Weather, logger domain.Logger) *app.SaveCurrentWeatherUseCase {
+	localRepository := _mongo.NewWeatherLocalRepository(mongoConn, logger)
+	remoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(), weatherConf.ApiKey, weatherConf.ApiUrl, weatherConf.Lat, weatherConf.Long)
 	getCurrentWeatherQuery := app.NewGetCurrentWeatherUseCase(remoteRepository)
 	saveWeatherQuery := app.NewSaveWeatherCommand(localRepository)
-	saveCurrentWeatherUseCase := app.NewSaveCurrentWeatherUseCase(getCurrentWeatherQuery, saveWeatherQuery)
-	return saveCurrentWeatherUseCase
-}
-func createConnection(uri string) (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
+	return app.NewSaveCurrentWeatherUseCase(logger, getCurrentWeatherQuery, saveWeatherQuery)
 }

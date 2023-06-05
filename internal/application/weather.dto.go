@@ -1,5 +1,9 @@
 package application
 
+import (
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
+)
+
 type WeatherDTO struct {
 	Name string `json:"name"`
 	Main struct {
@@ -10,4 +14,8 @@ type WeatherDTO struct {
 		Pressure int     `json:"pressure"`
 		Humidity int     `json:"humidity"`
 	} `json:"main"`
+}
+
+func (dto WeatherDTO) String() string {
+	return domain.ParseStruct(dto)
 }
