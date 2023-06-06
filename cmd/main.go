@@ -9,7 +9,6 @@ import (
 	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/http"
 	_mongo "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/mongo"
-	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
@@ -23,11 +22,18 @@ func main() {
 	})
 
 	mongoDb := _mongo.Connect(context.Background(), logger, conf.MongoURI, conf.MongoDatabase)
-	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(mongoDb, conf.MongoTimeout, conf.Weather, logger)
+
+	// domain repositories
+	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.MongoTimeout)
+	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
+
+	// use cases
+	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)
+	findCityCurrentTemperatureQuery := app.NewFindCityCurrentTemperatureQuery(weatherLocalRepository)
 
 	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase)
 
-	_app := infra.NewGinApplication(conf, logger)
+	_app := infra.NewGinApplication(conf, logger, findCityCurrentTemperatureQuery)
 	logger.Fatal(_app.Run())
 }
 
@@ -50,10 +56,8 @@ func startTickerOfSaveCurrentWeatherUseCase(baseLogger domain.Logger, tickerLoop
 	}
 }
 
-func createSaveCurrentWeatherUseCase(mongoConn *mongo.Database, mongoTimeout time.Duration, weatherConf config.Weather, logger domain.Logger) *app.SaveCurrentWeatherUseCase {
-	localRepository := _mongo.NewWeatherLocalRepository(mongoConn, logger, mongoTimeout)
-	remoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(), weatherConf.ApiKey, weatherConf.ApiUrl, weatherConf.Lat, weatherConf.Long)
-	getCurrentWeatherQuery := app.NewGetCurrentWeatherUseCase(remoteRepository)
-	saveWeatherQuery := app.NewSaveWeatherCommand(localRepository)
-	return app.NewSaveCurrentWeatherUseCase(logger, getCurrentWeatherQuery, saveWeatherQuery)
+func createSaveCurrentWeatherUseCase(logger domain.Logger, weatherLocalRepo domain.WeatherLocalRepository, weatherRemoteRepo domain.WeatherRemoteRepository) *app.SaveCurrentWeatherUseCase {
+	loadCurrentWeatherQuery := app.NewLoadCurrentWeatherUseCase(weatherRemoteRepo)
+	saveWeatherQuery := app.NewSaveWeatherCommand(weatherLocalRepo)
+	return app.NewSaveCurrentWeatherUseCase(logger, loadCurrentWeatherQuery, saveWeatherQuery)
 }

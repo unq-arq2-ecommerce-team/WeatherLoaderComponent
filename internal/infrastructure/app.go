@@ -6,8 +6,10 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	swaggerDocs "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/docs"
+	app "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/application"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/handlers"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/middleware"
 	"io"
 	"net/http"
@@ -29,14 +31,16 @@ type Application interface {
 }
 
 type ginApplication struct {
-	logger domain.Logger
-	config config.Config
+	logger                          domain.Logger
+	config                          config.Config
+	findCityCurrentTemperatureQuery *app.FindCityCurrentTemperatureQuery
 }
 
-func NewGinApplication(config config.Config, logger domain.Logger) Application {
+func NewGinApplication(config config.Config, logger domain.Logger, findCityCurrentTemperatureQuery *app.FindCityCurrentTemperatureQuery) Application {
 	return &ginApplication{
-		logger: logger,
-		config: config,
+		logger:                          logger,
+		config:                          config,
+		findCityCurrentTemperatureQuery: findCityCurrentTemperatureQuery,
 	}
 }
 
@@ -52,7 +56,7 @@ func (app *ginApplication) Run() error {
 	routerApi := router.Group("/api")
 	routerApi.Use(middleware.TracingRequestId())
 
-	//TODO: Add endpoint for consume data
+	routerApi.GET("/weather/city/:city/temperature", handlers.FindCityCurrentTemperatureHandler(app.logger, app.findCityCurrentTemperatureQuery))
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

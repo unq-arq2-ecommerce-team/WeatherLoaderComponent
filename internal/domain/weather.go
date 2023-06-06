@@ -5,17 +5,17 @@ import (
 )
 
 type Weather struct {
-	City           string    `json:"city"`
-	Temperature    float64   `json:"temperature"`
-	FeelsLike      float64   `json:"feelsLike"`
-	TemperatureMin float64   `json:"temperatureMin"`
-	TemperatureMax float64   `json:"temperatureMax"`
-	Pressure       int       `json:"pressure"`
-	Humidity       int       `json:"humidity"`
-	TimeStamp      time.Time `json:"timestamp"`
+	City           string    `json:"city" bson:"city"`
+	Temperature    float64   `json:"temperature" bson:"temperature"`
+	FeelsLike      float64   `json:"feelsLike" bson:"feelsLike"`
+	TemperatureMin float64   `json:"temperatureMin" bson:"temperatureMin"`
+	TemperatureMax float64   `json:"temperatureMax" bson:"temperatureMax"`
+	Pressure       int       `json:"pressure" bson:"pressure"`
+	Humidity       int       `json:"humidity" bson:"humidity"`
+	TimeStamp      time.Time `json:"timestamp" bson:"timestamp"`
 }
 
-func NewWeather(city string, temperature float64, feelsLike float64, temperatureMin float64, temperatureMax float64, pressure int, humidity int, timeStamp time.Time) *Weather {
+func NewWeather(city string, temperature, feelsLike, temperatureMin, temperatureMax float64, pressure, humidity int, timeStamp time.Time) *Weather {
 	return &Weather{
 		City:           city,
 		Temperature:    temperature,

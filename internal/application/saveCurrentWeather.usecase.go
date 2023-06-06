@@ -6,21 +6,21 @@ import (
 )
 
 type SaveCurrentWeatherUseCase struct {
-	baseLogger             domain.Logger
-	GetCurrentWeatherQuery *GetCurrentWeatherQuery
-	SaveWeatherCommand     *SaveWeatherCommand
+	baseLogger              domain.Logger
+	LoadCurrentWeatherQuery *LoadCurrentWeatherQuery
+	SaveWeatherCommand      *SaveWeatherCommand
 }
 
-func NewSaveCurrentWeatherUseCase(baseLogger domain.Logger, getCurrentWeatherQuery *GetCurrentWeatherQuery, saveWeatherCommand *SaveWeatherCommand) *SaveCurrentWeatherUseCase {
+func NewSaveCurrentWeatherUseCase(baseLogger domain.Logger, loadCurrentWeatherQuery *LoadCurrentWeatherQuery, saveWeatherCommand *SaveWeatherCommand) *SaveCurrentWeatherUseCase {
 	return &SaveCurrentWeatherUseCase{
-		baseLogger:             baseLogger.WithFields(domain.LoggerFields{"useCase": "saveCurrentWeatherUseCase"}),
-		GetCurrentWeatherQuery: getCurrentWeatherQuery,
-		SaveWeatherCommand:     saveWeatherCommand,
+		baseLogger:              baseLogger.WithFields(domain.LoggerFields{"useCase": "saveCurrentWeatherUseCase"}),
+		LoadCurrentWeatherQuery: loadCurrentWeatherQuery,
+		SaveWeatherCommand:      saveWeatherCommand,
 	}
 }
 
 func (u *SaveCurrentWeatherUseCase) Do(ctx context.Context) error {
-	weather, err := u.GetCurrentWeatherQuery.Do(ctx)
+	weather, err := u.LoadCurrentWeatherQuery.Do(ctx)
 	logger := u.baseLogger.WithFields(domain.LoggerFields{"weather": weather})
 	if err != nil {
 		logger.WithFields(domain.LoggerFields{"error": err}).Error("error when get current weather")
