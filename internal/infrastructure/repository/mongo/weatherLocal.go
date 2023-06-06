@@ -41,7 +41,7 @@ func (r *weatherLocalRepository) FindCurrentByCity(ctx context.Context, city str
 	defer cf()
 
 	opts := options.Find().SetSort(bson.D{{"timestamp", -1}})
-	cursor, err := r.db.Collection(weatherCollection).Find(ctxTimeout, createStringCaseInsensitiveFilter(city), opts)
+	cursor, err := r.db.Collection(weatherCollection).Find(ctxTimeout, bson.M{"city": createStringCaseInsensitiveFilter(city)}, opts)
 	if err != nil {
 		logger.WithFields(domain.LoggerFields{"error": err}).Errorf("error when execute find")
 		return nil, err
