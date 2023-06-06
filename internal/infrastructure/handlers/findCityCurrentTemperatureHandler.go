@@ -19,8 +19,9 @@ import (
 // @Failure 404 {object} dto.ErrorMessage
 // @Failure 500 {object} dto.ErrorMessage
 // @Router       /api/weather/city/{city}/temperature [get]
-func FindCityCurrentTemperatureHandler(log domain.Logger, findCityCurrentTemperature *application.FindCityCurrentTemperatureQuery) gin.HandlerFunc {
+func FindCityCurrentTemperatureHandler(logger domain.Logger, findCityCurrentTemperature *application.FindCityCurrentTemperatureQuery) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		log := logger.WithRequestId(c)
 		cityParam, _ := c.Params.Get("city")
 		if cityParam == "" {
 			log.WithFields(domain.LoggerFields{"cityParam": cityParam}).Errorf("city param is empty")

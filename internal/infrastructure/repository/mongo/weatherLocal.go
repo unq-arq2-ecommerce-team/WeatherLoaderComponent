@@ -35,25 +35,25 @@ func (r *weatherLocalRepository) Save(ctx context.Context, weather *domain.Weath
 }
 
 func (r *weatherLocalRepository) FindCurrentByCity(ctx context.Context, city string) (*domain.Weather, error) {
-	logger := r.logger.WithFields(domain.LoggerFields{"city": city})
-	logger.Debugf("init find current by city...")
+	log := r.logger.WithRequestId(ctx).WithFields(domain.LoggerFields{"city": city})
+	log.Debugf("init find current by city...")
 	ctxTimeout, cf := context.WithTimeout(ctx, r.timeout)
 	defer cf()
 
 	opts := options.Find().SetSort(bson.D{{"timestamp", -1}})
 	cursor, err := r.db.Collection(weatherCollection).Find(ctxTimeout, bson.M{"city": createStringCaseInsensitiveFilter(city)}, opts)
 	if err != nil {
-		logger.WithFields(domain.LoggerFields{"error": err}).Errorf("error when execute find")
+		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when execute find")
 		return nil, err
 	}
 
 	var results []domain.Weather
 	if err = cursor.All(ctxTimeout, &results); err != nil {
-		logger.WithFields(domain.LoggerFields{"error": err}).Errorf("error when read cursor")
+		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when read cursor")
 		return nil, err
 	}
 
-	logger.WithFields(domain.LoggerFields{"error": err}).Infof("successful find current weather by city")
+	log.WithFields(domain.LoggerFields{"error": err}).Infof("successful find current weather by city")
 	if len(results) == 0 {
 		return nil, domain.WeatherNotFoundError{City: city}
 	}
