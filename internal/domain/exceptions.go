@@ -7,5 +7,5 @@ type WeatherNotFoundError struct {
 }
 
 func (e WeatherNotFoundError) Error() string {
-	return fmt.Sprintf("weather with city %v not found", e.City)
+	return fmt.Sprintf("weather with city %s not found", e.City)
 }
