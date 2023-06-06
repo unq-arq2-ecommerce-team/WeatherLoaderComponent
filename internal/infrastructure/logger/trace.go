@@ -26,3 +26,8 @@ func GetRequestId(ctx context.Context) string {
 	}
 	return ""
 }
+
+// RequestIdHeaderKey return key of send requestId header
+func RequestIdHeaderKey() string {
+	return requestIdKeyStr
+}

@@ -38,7 +38,7 @@ func (r *weatherRemoteRepository) GetCurrentWeather(ctx context.Context) (*domai
 	logger := r.baseLogger.WithFields(loggerPkg.Fields{"url": url})
 	now := time.Now().UTC()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := NewRequestWithContextWithNoBody(ctx, http.MethodGet, url)
 	if err != nil {
 		logger.WithFields(loggerPkg.Fields{"error": err}).Errorf("error when create request object")
 		return nil, err

@@ -22,6 +22,7 @@ import (
 func FindCityCurrentTemperatureHandler(logger domain.Logger, findCityCurrentTemperature *application.FindCityCurrentTemperatureQuery) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log := logger.WithRequestId(c)
+		log.Debug("findCityCurrentTemperatureHandler init")
 		cityParam, _ := c.Params.Get("city")
 		if cityParam == "" {
 			log.WithFields(domain.LoggerFields{"cityParam": cityParam}).Errorf("city param is empty")
