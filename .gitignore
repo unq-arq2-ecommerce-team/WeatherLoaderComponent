@@ -20,6 +20,8 @@
 #IDE
 .idea
 
+# Swagger generated files
+docs/
 
 # Go workspace file
 go.work
