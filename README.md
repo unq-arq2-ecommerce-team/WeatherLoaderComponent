@@ -1,5 +1,6 @@
 # WeatherLoaderComponent
 
+Servicio para consumir datos de clima y persistirlas.
 
 ## Tecnologías:
 
@@ -15,13 +16,13 @@
 
 Instalar swag localmente (se necesita go 1.20 or up)
 
-```
+```bash
 go install github.com/swaggo/swag/cmd/swag@v1.8.10
 ```
 
 Para actualizar la api doc de swagger, ejecutar en el folder root del repo:
 
-```
+```bash
 swag init -g internal/infrastructure/app.go
 ```
 
@@ -40,7 +41,7 @@ http://localhost:<port>/docs/index.html
 
 2) Construir el Dockerfile (imagen) del servicio
 
-    ```
+    ```bash
     docker build -t weather_loader_component .
     ```
 
@@ -49,7 +50,7 @@ http://localhost:<port>/docs/index.html
 
 Tambien, si se desea se puede cambiar las envs por otras de las que estan. Se recomienda utilizar el mismo puerto externo e interno para que funcione correctamente swagger.
 
-```
+```bash
 docker run -p <port>:8083 --env-file ./.env --name weather_loader_component weather_loader_component
 ```
 
@@ -57,7 +58,7 @@ Nota: agregar "-d" si se quiere ejecutar como deamon
 
 Ejemplo:
 
-```
+```bash
 docker run -d -p 8083:8083 --env-file ./.env --name weather_loader_component weather_loader_component
 ```
 

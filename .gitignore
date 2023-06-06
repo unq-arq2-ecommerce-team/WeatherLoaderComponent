@@ -18,7 +18,7 @@
 # vendor/
 
 #IDE
-.idea
+.idea/
 
 # Swagger generated files
 docs/
