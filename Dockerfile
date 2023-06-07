@@ -25,7 +25,7 @@ RUN swag init -g internal/infrastructure/app.go
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o main ./cmd
 
 # Exponer el puerto que utiliza la aplicación
-#EXPOSE 8083
+#EXPOSE 8081
 
 # Ejecutar la aplicación
 CMD ["./main"]
