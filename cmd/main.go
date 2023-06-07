@@ -30,10 +30,11 @@ func main() {
 	// use cases
 	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)
 	findCityCurrentTemperatureQuery := app.NewFindCityCurrentTemperatureQuery(weatherLocalRepository)
+	getCityDayTemperatureAverageQuery := app.NewGetCityTemperatureAverageQuery(weatherLocalRepository)
 
 	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase)
 
-	_app := infra.NewGinApplication(conf, logger, findCityCurrentTemperatureQuery)
+	_app := infra.NewGinApplication(conf, logger, findCityCurrentTemperatureQuery, getCityDayTemperatureAverageQuery)
 	logger.Fatal(_app.Run())
 }
 

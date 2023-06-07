@@ -60,6 +60,46 @@ func (r *weatherLocalRepository) FindCurrentByCity(ctx context.Context, city str
 	return &results[0], nil
 }
 
+func (r *weatherLocalRepository) GetAverageTemperatureByCityAndDateRange(ctx context.Context, city string, dateFrom, dateTo time.Time) (*domain.AverageTemperature, error) {
+	log := r.logger.WithRequestId(ctx).WithFields(domain.LoggerFields{"city": city, "dateFrom": dateFrom, "dateTo": dateTo})
+	log.Debugf("init GetAverageTemperatureByCityAndDateRange...")
+	ctxTimeout, cancelFn := context.WithTimeout(ctx, r.timeout)
+	defer cancelFn()
+
+	pipeline := getAverageTemperatureByCityAndDatesPipeline(city, dateFrom, dateTo)
+
+	log = log.WithFields(domain.LoggerFields{"pipelineParam": pipeline})
+	cursor, err := r.db.Collection(weatherCollection).Aggregate(ctxTimeout, pipeline)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, domain.NewAverageTemperatureNotFoundError(city, dateFrom, dateTo)
+		}
+		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when execute aggregate")
+		return nil, err
+	}
+
+	res := make([]domain.AverageTemperature, 0)
+	for cursor.Next(ctxTimeout) {
+		var elem domain.AverageTemperature
+		if err := cursor.Decode(&elem); err != nil {
+			log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when decode to AverageTemperature")
+			return nil, err
+		}
+		res = append(res, elem)
+	}
+
+	if len(res) == 0 {
+		log.Errorf("error when get average temperature")
+		return nil, domain.NewAverageTemperatureNotFoundError(city, dateFrom, dateTo)
+	}
+
+	avgTemp := &res[0]
+	avgTemp.Set(dateFrom, dateTo)
+	
+	log.Infof("successful get average temperature city %s", avgTemp)
+	return avgTemp, nil
+}
+
 func (r *weatherLocalRepository) createIndexes() {
 	ctxTimeout, cf := context.WithTimeout(context.Background(), r.timeout)
 	defer cf()

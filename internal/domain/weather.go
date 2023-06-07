@@ -28,6 +28,24 @@ func NewWeather(city string, temperature, feelsLike, temperatureMin, temperature
 	}
 }
 
+type AverageTemperature struct {
+	City           string    `json:"city" bson:"_id"`
+	AvgTemperature float64   `json:"avgTemperature" bson:"avgTemperature"`
+	DateFrom       time.Time `json:"dateFrom"`
+	DateTo         time.Time `json:"dateTo"`
+	DaysBetween    float64   `json:"daysBetween"`
+}
+
+func (a *AverageTemperature) Set(dateFrom, dateTo time.Time) {
+	a.DateFrom = dateFrom
+	a.DateTo = dateTo
+	a.DaysBetween = dateTo.Sub(dateFrom).Hours() / 24
+}
+
 func (w Weather) String() string {
 	return ParseStruct(w)
+}
+
+func (a *AverageTemperature) String() string {
+	return ParseStruct(a)
 }

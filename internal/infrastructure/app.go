@@ -31,16 +31,23 @@ type Application interface {
 }
 
 type ginApplication struct {
-	logger                          domain.Logger
-	config                          config.Config
-	findCityCurrentTemperatureQuery *app.FindCityCurrentTemperatureQuery
+	logger                            domain.Logger
+	config                            config.Config
+	findCityCurrentTemperatureQuery   *app.FindCityCurrentTemperatureQuery
+	getCityDayTemperatureAverageQuery *app.GetCityTemperatureAverageQuery
 }
 
-func NewGinApplication(config config.Config, logger domain.Logger, findCityCurrentTemperatureQuery *app.FindCityCurrentTemperatureQuery) Application {
+func NewGinApplication(
+	config config.Config,
+	logger domain.Logger,
+	findCityCurrentTemperatureQuery *app.FindCityCurrentTemperatureQuery,
+	getCityDayTemperatureAverageQuery *app.GetCityTemperatureAverageQuery,
+) Application {
 	return &ginApplication{
-		logger:                          logger,
-		config:                          config,
-		findCityCurrentTemperatureQuery: findCityCurrentTemperatureQuery,
+		logger:                            logger,
+		config:                            config,
+		findCityCurrentTemperatureQuery:   findCityCurrentTemperatureQuery,
+		getCityDayTemperatureAverageQuery: getCityDayTemperatureAverageQuery,
 	}
 }
 
@@ -57,6 +64,7 @@ func (app *ginApplication) Run() error {
 	routerApi.Use(middleware.TracingRequestId())
 
 	routerApi.GET("/weather/city/:city/temperature", handlers.FindCityCurrentTemperatureHandler(app.logger, app.findCityCurrentTemperatureQuery))
+	routerApi.GET("/weather/city/:city/temperature/average", handlers.GetCityTemperatureAverageHandler(app.logger, app.getCityDayTemperatureAverageQuery))
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
