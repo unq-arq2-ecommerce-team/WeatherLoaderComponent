@@ -31,8 +31,8 @@ func NewWeather(city string, temperature, feelsLike, temperatureMin, temperature
 type AverageTemperature struct {
 	City           string    `json:"city" bson:"_id"`
 	AvgTemperature float64   `json:"avgTemperature" bson:"avgTemperature"`
-	DateFrom       time.Time `json:"dateFrom"`
-	DateTo         time.Time `json:"dateTo"`
+	DateFrom       time.Time `json:"dateFrom" time_format:"2006-01-02T15:04:05.000Z" time_utc:"1"`
+	DateTo         time.Time `json:"dateTo" time_format:"2006-01-02T15:04:05.000Z" time_utc:"1"`
 	DaysBetween    float64   `json:"daysBetween"`
 }
 

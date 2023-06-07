@@ -36,7 +36,6 @@ func NewWeatherRemoteRepository(baseLogger domain.Logger, client *http.Client, a
 func (r *weatherRemoteRepository) GetCurrentWeather(ctx context.Context) (*domain.Weather, error) {
 	url := fmt.Sprintf("%s?lat=%s&lon=%s&units=metric&appid=%s", r.apiUrl, r.lat, r.long, r.apiKey)
 	logger := r.baseLogger.WithFields(loggerPkg.Fields{"url": url})
-	now := time.Now().UTC()
 
 	req, err := NewRequestWithContextWithNoBody(ctx, http.MethodGet, url)
 	if err != nil {
@@ -51,6 +50,7 @@ func (r *weatherRemoteRepository) GetCurrentWeather(ctx context.Context) (*domai
 	}
 	defer resp.Body.Close()
 
+	now := time.Now().UTC()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.WithFields(loggerPkg.Fields{"error": err}).Errorf("failed when read response body")

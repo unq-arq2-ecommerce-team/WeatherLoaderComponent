@@ -5,8 +5,8 @@ import (
 )
 
 type TemperatureAverageQuery struct {
-	DateFrom time.Time `form:"dateFrom" binding:"required" time_format:"2006-01-02T15:04:05.000Z"`
-	DateTo   time.Time `form:"dateTo" binding:"required" time_format:"2006-01-02T15:04:05.000Z"`
+	DateFrom time.Time `form:"dateFrom" binding:"required" time_format:"2006-01-02T15:04:05.000Z" time_utc:"1"`
+	DateTo   time.Time `form:"dateTo" binding:"required" time_format:"2006-01-02T15:04:05.000Z" time_utc:"1"`
 }
 
 func (dto TemperatureAverageQuery) InvalidDates() bool {
