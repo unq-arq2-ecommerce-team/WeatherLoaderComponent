@@ -13,6 +13,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.1
 	go.mongodb.org/mongo-driver v1.11.6
+	github.com/yukitsune/lokirus v1.0.1
 )
 
 require (
