@@ -12,7 +12,7 @@ type Weather struct {
 	TemperatureMax float64   `json:"temperatureMax" bson:"temperatureMax"`
 	Pressure       int       `json:"pressure" bson:"pressure"`
 	Humidity       int       `json:"humidity" bson:"humidity"`
-	TimeStamp      time.Time `json:"timestamp" bson:"timestamp"`
+	TimeStamp      time.Time `json:"timestamp" bson:"timestamp" time_format:"2006-01-02T15:04:05.000Z" time_utc:"1"`
 }
 
 func NewWeather(city string, temperature, feelsLike, temperatureMin, temperatureMax float64, pressure, humidity int, timeStamp time.Time) *Weather {

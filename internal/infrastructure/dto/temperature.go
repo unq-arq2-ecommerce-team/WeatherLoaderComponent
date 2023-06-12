@@ -8,7 +8,7 @@ import (
 type CurrentTemperatureDTO struct {
 	City        string    `json:"city"`
 	Temperature float64   `json:"temperature"`
-	Timestamp   time.Time `json:"timestamp"`
+	Timestamp   time.Time `json:"timestamp" time_format:"2006-01-02T15:04:05.000Z" time_utc:"1"`
 }
 
 func NewCurrentTemperatureDTO(currentWeather *domain.Weather) *CurrentTemperatureDTO {
