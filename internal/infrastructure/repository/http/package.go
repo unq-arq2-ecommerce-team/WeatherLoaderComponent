@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const deltaRetryWait = 2 * time.Second
+
 func NewDefaultClient() *http.Client {
 	return cleanhttp.DefaultPooledClient()
 }
@@ -22,7 +24,7 @@ func NewClient(httpConfig config.HttpConfig) *http.Client {
 	retryableClient.HTTPClient = httpClient
 	retryableClient.RetryMax = httpConfig.Retries
 	retryableClient.RetryWaitMin = httpConfig.RetryWait
-	retryableClient.RetryWaitMax = httpConfig.RetryWait + (2 * time.Second)
+	retryableClient.RetryWaitMax = httpConfig.RetryWait + deltaRetryWait
 	return retryableClient.StandardClient()
 }
 
