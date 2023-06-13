@@ -21,10 +21,17 @@ type Config struct {
 }
 
 type Weather struct {
-	ApiUrl string `split_words:"true" required:"true"`
-	ApiKey string `split_words:"true" required:"true"`
-	Lat    string `split_words:"true" required:"true"`
-	Long   string `split_words:"true" required:"true"`
+	ApiUrl     string     `split_words:"true" required:"true"`
+	ApiKey     string     `split_words:"true" required:"true"`
+	Lat        string     `required:"true"`
+	Long       string     `required:"true"`
+	HttpConfig HttpConfig `split_words:"true"`
+}
+
+type HttpConfig struct {
+	Timeout   time.Duration `default:"10s"`
+	Retries   int           `default:"0"`
+	RetryWait time.Duration `split_words:"true" default:"15s"`
 }
 
 func LoadConfig() Config {

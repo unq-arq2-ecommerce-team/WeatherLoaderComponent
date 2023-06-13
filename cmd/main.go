@@ -25,7 +25,7 @@ func main() {
 
 	// domain repositories
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.MongoTimeout)
-	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
+	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
 
 	// use cases
 	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)

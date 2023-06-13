@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
 	"io"
 	"net/http"
 	"time"
@@ -25,7 +24,7 @@ type weatherRemoteRepository struct {
 func NewWeatherRemoteRepository(baseLogger domain.Logger, client *http.Client, apiKey, apiUrl, lat, long string) domain.WeatherRemoteRepository {
 	return &weatherRemoteRepository{
 		client:     client,
-		baseLogger: baseLogger.WithFields(loggerPkg.Fields{"http.repository": "weatherRemoteRepository"}),
+		baseLogger: baseLogger.WithFields(domain.LoggerFields{"http.repository": "weatherRemoteRepository"}),
 		apiKey:     apiKey,
 		apiUrl:     apiUrl,
 		lat:        lat,
@@ -35,17 +34,17 @@ func NewWeatherRemoteRepository(baseLogger domain.Logger, client *http.Client, a
 
 func (r *weatherRemoteRepository) GetCurrentWeather(ctx context.Context) (*domain.Weather, error) {
 	url := fmt.Sprintf("%s?lat=%s&lon=%s&units=metric&appid=%s", r.apiUrl, r.lat, r.long, r.apiKey)
-	logger := r.baseLogger.WithFields(loggerPkg.Fields{"url": url})
+	logger := r.baseLogger.WithFields(domain.LoggerFields{"url": url})
 
 	req, err := NewRequestWithContextWithNoBody(ctx, http.MethodGet, url)
 	if err != nil {
-		logger.WithFields(loggerPkg.Fields{"error": err}).Errorf("error when create request object")
+		logger.WithFields(domain.LoggerFields{"error": err}).Errorf("error when create request object")
 		return nil, err
 	}
 
 	resp, err := r.client.Do(req)
 	if err != nil {
-		logger.WithFields(loggerPkg.Fields{"error": err}).Errorf("error when do http request")
+		logger.WithFields(domain.LoggerFields{"error": err}).Errorf("error when do http request")
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -53,24 +52,28 @@ func (r *weatherRemoteRepository) GetCurrentWeather(ctx context.Context) (*domai
 	now := time.Now().UTC()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.WithFields(loggerPkg.Fields{"error": err}).Errorf("failed when read response body")
+		logger.WithFields(domain.LoggerFields{"error": err}).Errorf("failed when read response body")
 		return nil, err
 	}
 
-	logger = logger.WithFields(loggerPkg.Fields{"responseBody": string(body)})
+	logger = logger.WithFields(domain.LoggerFields{"responseBody": string(body)})
 
 	if !IsStatusCode2XX(resp.StatusCode) {
 		_err := fmt.Errorf("invalid response status code %v", resp.StatusCode)
-		logger.WithFields(loggerPkg.Fields{"error": _err}).Errorf("status code not in [200,299]")
+		logger.WithFields(domain.LoggerFields{"error": _err}).Errorf("status code not in [200,299]")
 		return nil, _err
 	}
 
-	var weatherData app.WeatherDTO
-	err = json.Unmarshal(body, &weatherData)
+	var weatherRes app.WeatherDTO
+	err = json.Unmarshal(body, &weatherRes)
 	if err != nil {
-		logger.WithFields(loggerPkg.Fields{"error": err}).Errorf("error parsing response body to model dto data")
+		logger.WithFields(domain.LoggerFields{"error": err}).Errorf("error parsing response body to model dto data")
 		return nil, err
 	}
+	if weatherRes.IsInvalid() {
+		logger.WithFields(domain.LoggerFields{"weatherResDto": weatherRes}).Errorf("error invalid weather data dto")
+		return nil, fmt.Errorf("error invalid weather response dto")
+	}
 	logger.Debugf("successful get current weather")
-	return domain.NewWeather(weatherData.Name, weatherData.Main.Temp, weatherData.Main.FeelLike, weatherData.Main.TempMin, weatherData.Main.TempMax, weatherData.Main.Pressure, weatherData.Main.Humidity, now), nil
+	return domain.NewWeather(weatherRes.City, weatherRes.Data.Temp, weatherRes.Data.FeelLike, weatherRes.Data.TempMin, weatherRes.Data.TempMax, weatherRes.Data.Pressure, weatherRes.Data.Humidity, now), nil
 }
