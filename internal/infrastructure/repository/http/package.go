@@ -10,8 +10,12 @@ import (
 	"time"
 )
 
+func NewDefaultClient() *http.Client {
+	return cleanhttp.DefaultPooledClient()
+}
+
 func NewClient(httpConfig config.HttpConfig) *http.Client {
-	httpClient := cleanhttp.DefaultPooledClient()
+	httpClient := NewDefaultClient()
 	httpClient.Timeout = httpConfig.Timeout
 
 	retryableClient := retryablehttp.NewClient()
