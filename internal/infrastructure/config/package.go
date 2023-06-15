@@ -13,6 +13,7 @@ type Config struct {
 	Environment    string        `required:"true" default:"development"`
 	Port           int           `required:"true" default:"8080"`
 	LogLevel       string        `split_words:"true" default:"DEBUG"`
+	LokiHost       string        `split_words:"true" required:"true"`
 	MongoURI       string        `split_words:"true" required:"true"`
 	MongoDatabase  string        `split_words:"true" required:"true"`
 	MongoTimeout   time.Duration `split_words:"true" required:"true"`
@@ -35,15 +36,12 @@ type HttpConfig struct {
 }
 
 func LoadConfig() Config {
-	primitiveLogger := loggerPkg.New(&loggerPkg.Config{
-		ServiceName: ServiceName,
-		LogFormat:   loggerPkg.JsonFormat,
-	})
+	defaultLogger := loggerPkg.DefaultLogger(ServiceName, loggerPkg.JsonFormat)
 
 	// Auto load ".env" file
 	err := godotenv.Load()
 	if err != nil {
-		primitiveLogger.Error("error loading .env file")
+		defaultLogger.Error("error loading .env file")
 	}
 	var config Config
 	if err := envconfig.Process("", &config); err != nil {

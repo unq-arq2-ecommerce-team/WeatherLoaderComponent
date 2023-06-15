@@ -19,13 +19,14 @@ func main() {
 		EnvironmentName: conf.Environment,
 		LogLevel:        conf.LogLevel,
 		LogFormat:       loggerPkg.JsonFormat,
+		LokiHost:        conf.LokiHost,
 	})
 
 	mongoDb := _mongo.Connect(context.Background(), logger, conf.MongoURI, conf.MongoDatabase)
 
 	// domain repositories
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.MongoTimeout)
-	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
+	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
 
 	// use cases
 	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)

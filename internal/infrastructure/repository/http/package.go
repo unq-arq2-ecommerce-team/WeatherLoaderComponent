@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
 	"net/http"
@@ -16,11 +17,12 @@ func NewDefaultClient() *http.Client {
 	return cleanhttp.DefaultPooledClient()
 }
 
-func NewClient(httpConfig config.HttpConfig) *http.Client {
+func NewClient(logger domain.Logger, httpConfig config.HttpConfig) *http.Client {
 	httpClient := NewDefaultClient()
 	httpClient.Timeout = httpConfig.Timeout
 
 	retryableClient := retryablehttp.NewClient()
+	retryableClient.Logger = logger.WithFields(domain.LoggerFields{"loggerFrom": "http.retryableClient"})
 	retryableClient.HTTPClient = httpClient
 	retryableClient.RetryMax = httpConfig.Retries
 	retryableClient.RetryWaitMin = httpConfig.RetryWait

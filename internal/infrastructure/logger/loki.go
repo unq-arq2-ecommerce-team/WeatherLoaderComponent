@@ -1,29 +1,27 @@
-package hooks
+package logger
 
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/yukitsune/lokirus"
 )
 
-const AppName = "weather-loader-component"
-const LokiEndpoint = "http://loki:3100"
-
-func BuildLokiHook() *lokirus.LokiHook {
+func BuildLokiHook(conf *Config) *lokirus.LokiHook {
 	opts := lokirus.NewLokiHookOptions().
 		// Grafana doesn't have a "panic" level, but it does have a "critical" level
 		// https://grafana.com/docs/grafana/latest/explore/logs-integration/
 		WithLevelMap(lokirus.LevelMap{logrus.PanicLevel: "critical"}).
-		WithFormatter(&logrus.JSONFormatter{}).
+		WithFormatter(getFormatter(conf.LogFormat)).
 		WithStaticLabels(lokirus.Labels{
-			"app":         AppName,
-			"environment": "development",
+			"app":         conf.ServiceName,
+			"environment": conf.EnvironmentName,
 		})
 
 	return lokirus.NewLokiHookWithOpts(
-		LokiEndpoint,
+		conf.LokiHost,
 		opts,
 		logrus.InfoLevel,
 		logrus.WarnLevel,
 		logrus.ErrorLevel,
-		logrus.FatalLevel)
+		logrus.FatalLevel,
+	)
 }

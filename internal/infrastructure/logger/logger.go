@@ -7,7 +7,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
-	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger/hooks"
 )
 
 const JsonFormat = "JSON"
@@ -30,7 +29,23 @@ type Config struct {
 	EnvironmentName string
 	LogLevel        string
 	LogFormat       string
+	LokiHost        string
 	DefaultFields   map[string]interface{}
+}
+
+// DefaultLogger creates a new Logger with default configuration
+func DefaultLogger(serviceName, logFormat string) domain.Logger {
+	config := &Config{
+		ServiceName: serviceName,
+		LogFormat:   logFormat,
+	}
+	fields := addIfNotEmpty(config.DefaultFields, "serviceName", serviceName)
+	defaultLogger := &logger{
+		logger:  logrus.StandardLogger(),
+		dFields: fields,
+	}
+	configure(config)
+	return defaultLogger
 }
 
 // New creates a new Logger from some configuration
@@ -42,7 +57,7 @@ func New(config *Config) domain.Logger {
 		dFields: fields,
 	}
 
-	lokiHook := hooks.BuildLokiHook()
+	lokiHook := BuildLokiHook(config)
 	newLogger.logger.AddHook(lokiHook)
 	configure(config)
 	return newLogger
