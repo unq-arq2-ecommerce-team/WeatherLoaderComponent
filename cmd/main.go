@@ -9,6 +9,7 @@ import (
 	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/http"
 	_mongo "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/mongo"
+	"go.opentelemetry.io/otel/propagation"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -108,5 +109,8 @@ func initTracerAuto() func(context.Context) error {
 			sdktrace.WithResource(resources),
 		),
 	)
+
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	
 	return exporter.Shutdown
 }
