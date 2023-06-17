@@ -11,6 +11,7 @@ import (
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/handlers"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/middleware"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"io"
 	"net/http"
 )
@@ -58,6 +59,8 @@ func (app *ginApplication) Run() error {
 	gin.DefaultWriter = io.Discard
 
 	router := gin.Default()
+	router.Use(otelgin.Middleware("weather-loader"))
+
 	router.GET("/", HealthCheck)
 
 	routerApi := router.Group("/api")

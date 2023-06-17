@@ -9,6 +9,14 @@ import (
 	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/http"
 	_mongo "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/mongo"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"log"
 	"time"
 )
 
@@ -23,6 +31,10 @@ func main() {
 	})
 
 	mongoDb := _mongo.Connect(context.Background(), logger, conf.MongoURI, conf.MongoDatabase)
+
+	// OTEL
+	cleanup := initTracerAuto()
+	defer cleanup(context.Background())
 
 	// domain repositories
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.MongoTimeout)
@@ -62,4 +74,39 @@ func createSaveCurrentWeatherUseCase(logger domain.Logger, weatherLocalRepo doma
 	loadCurrentWeatherQuery := app.NewLoadCurrentWeatherUseCase(weatherRemoteRepo)
 	saveWeatherQuery := app.NewSaveWeatherCommand(weatherLocalRepo)
 	return app.NewSaveCurrentWeatherUseCase(logger, loadCurrentWeatherQuery, saveWeatherQuery)
+}
+
+func initTracerAuto() func(context.Context) error {
+
+	exporter, err := otlptrace.New(
+		context.Background(),
+		otlptracegrpc.NewClient(
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint("otel-collector:4317"),
+		),
+	)
+
+	if err != nil {
+		log.Fatal("Could not set exporter: ", err)
+	}
+	resources, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			attribute.String("service.name", "weather-loader"),
+			attribute.String("application", "WeatherLoaderComponent"),
+		),
+	)
+	if err != nil {
+		log.Fatal("Could not set resources: ", err)
+	}
+
+	otel.SetTracerProvider(
+		sdktrace.NewTracerProvider(
+			sdktrace.WithSampler(sdktrace.AlwaysSample()),
+			sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(exporter)),
+			sdktrace.WithSyncer(exporter),
+			sdktrace.WithResource(resources),
+		),
+	)
+	return exporter.Shutdown
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 	"time"
 )
 
@@ -13,7 +14,11 @@ func Connect(ctx context.Context, baseLogger domain.Logger, uri, database string
 	ctx, cf := context.WithTimeout(ctx, 10*time.Second)
 	defer cf()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	mongoOptions := options.Client()
+	mongoOptions.Monitor = otelmongo.NewMonitor()
+	mongoOptions.ApplyURI(uri)
+
+	client, err := mongo.Connect(ctx, mongoOptions)
 
 	if err != nil {
 		log.WithFields(domain.LoggerFields{"error": err}).Fatalf("an error has occurred while trying to connect to mongo cluster")
