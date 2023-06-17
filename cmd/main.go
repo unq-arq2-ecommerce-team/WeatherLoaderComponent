@@ -111,6 +111,6 @@ func initTracerAuto() func(context.Context) error {
 	)
 
 	otel.SetTextMapPropagator(propagation.TraceContext{})
-	
+
 	return exporter.Shutdown
 }
