@@ -37,7 +37,7 @@ func main() {
 	weatherHttpConfig := conf.Weather.HttpConfig
 	weatherHttpConfig.OtelEnabled = isIntegrationEnv
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.Mongo.Timeout)
-	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
+	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, weatherHttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
 
 	// use cases
 	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)
