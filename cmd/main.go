@@ -29,15 +29,13 @@ func main() {
 	mongoDb := _mongo.Connect(context.Background(), logger, conf.Mongo.URI, conf.Mongo.Database, isIntegrationEnv)
 
 	// OTEL
-	if isIntegrationEnv {
-		otel.InitOtelTrace(logger, conf.Otel)
-	}
+	cleanupFn := otel.InitOtelTrace(context.Background(), logger, conf.Otel, isIntegrationEnv)
+	defer cleanupFn()
 
 	// domain repositories
-	weatherHttpConfig := conf.Weather.HttpConfig
-	weatherHttpConfig.OtelEnabled = isIntegrationEnv
+	conf.Weather.HttpConfig.OtelEnabled = isIntegrationEnv
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.Mongo.Timeout)
-	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, weatherHttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
+	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
 
 	// use cases
 	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)
