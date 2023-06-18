@@ -10,6 +10,8 @@ import (
 const (
 	OtlServiceName = "weather-loader"
 	ServiceName    = "WeatherLoaderComponent"
+
+	EnvDockerCompose = "docker-compose"
 )
 
 type Config struct {
@@ -21,6 +23,10 @@ type Config struct {
 	Mongo          MongoConfig   `split_words:"true" required:"true"`
 	TickerLoopTime time.Duration `split_words:"true" default:"60m"`
 	Weather        Weather       `required:"true"`
+}
+
+func (c Config) IsIntegrationEnv() bool {
+	return c.Environment == EnvDockerCompose
 }
 
 type Weather struct {

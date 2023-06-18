@@ -26,13 +26,9 @@ func main() {
 	mongoDb := _mongo.Connect(context.Background(), logger, conf.Mongo.URI, conf.Mongo.Database)
 
 	// OTEL
-	cleanupFn := otel.InitTracerAuto(logger, conf.Otel, config.OtlServiceName, config.ServiceName)
-	defer func() {
-		err := cleanupFn(context.Background())
-		if err != nil {
-			logger.WithFields(domain.LoggerFields{"error": err}).Errorf("some error found when clean up applied")
-		}
-	}()
+	if conf.IsIntegrationEnv() {
+		otel.InitOtelTrace(logger, conf.Otel)
+	}
 
 	// domain repositories
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.Mongo.Timeout)
