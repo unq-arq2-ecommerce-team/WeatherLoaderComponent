@@ -15,22 +15,27 @@ import (
 
 func main() {
 	conf := config.LoadConfig()
+	isIntegrationEnv := conf.IsIntegrationEnv()
+
 	logger := loggerPkg.New(&loggerPkg.Config{
-		ServiceName:     config.ServiceName,
-		EnvironmentName: conf.Environment,
-		LogLevel:        conf.LogLevel,
-		LogFormat:       loggerPkg.JsonFormat,
-		LokiHost:        conf.LokiHost,
+		ServiceName:      config.ServiceName,
+		EnvironmentName:  conf.Environment,
+		IsIntegrationEnv: isIntegrationEnv,
+		LogLevel:         conf.LogLevel,
+		LogFormat:        loggerPkg.JsonFormat,
+		LokiHost:         conf.LokiHost,
 	})
 
-	mongoDb := _mongo.Connect(context.Background(), logger, conf.Mongo.URI, conf.Mongo.Database)
+	mongoDb := _mongo.Connect(context.Background(), logger, conf.Mongo.URI, conf.Mongo.Database, isIntegrationEnv)
 
 	// OTEL
-	if conf.IsIntegrationEnv() {
+	if isIntegrationEnv {
 		otel.InitOtelTrace(logger, conf.Otel)
 	}
 
 	// domain repositories
+	weatherHttpConfig := conf.Weather.HttpConfig
+	weatherHttpConfig.OtelEnabled = isIntegrationEnv
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.Mongo.Timeout)
 	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
 

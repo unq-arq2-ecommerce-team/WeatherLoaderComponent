@@ -9,13 +9,15 @@ import (
 	"time"
 )
 
-func Connect(ctx context.Context, baseLogger domain.Logger, uri, database string) *mongo.Database {
+func Connect(ctx context.Context, baseLogger domain.Logger, uri, database string, otelEnabled bool) *mongo.Database {
 	log := baseLogger.WithFields(domain.LoggerFields{"logger": "mongo", "database": database})
 	ctx, cf := context.WithTimeout(ctx, 10*time.Second)
 	defer cf()
 
 	mongoOptions := options.Client()
-	mongoOptions.Monitor = otel.GetMongoMonitor()
+	if otelEnabled {
+		mongoOptions.Monitor = otel.GetMongoMonitor()
+	}
 	mongoOptions.ApplyURI(uri)
 
 	client, err := mongo.Connect(ctx, mongoOptions)

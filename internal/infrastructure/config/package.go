@@ -38,9 +38,10 @@ type Weather struct {
 }
 
 type HttpConfig struct {
-	Timeout   time.Duration `default:"10s"`
-	Retries   int           `default:"0"`
-	RetryWait time.Duration `split_words:"true" default:"15s"`
+	OtelEnabled bool          `required:"true" default:"false"`
+	Timeout     time.Duration `default:"10s"`
+	Retries     int           `default:"0"`
+	RetryWait   time.Duration `split_words:"true" default:"15s"`
 }
 
 type MongoConfig struct {
