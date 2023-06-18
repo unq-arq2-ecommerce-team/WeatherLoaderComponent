@@ -7,6 +7,7 @@ import (
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/otel"
 	"net/http"
 	"time"
 )
@@ -20,6 +21,9 @@ func NewDefaultClient() *http.Client {
 func NewClient(logger domain.Logger, httpConfig config.HttpConfig) *http.Client {
 	httpClient := NewDefaultClient()
 	httpClient.Timeout = httpConfig.Timeout
+	if httpConfig.OtelEnabled {
+		httpClient.Transport = otel.WrapAndReturn(httpClient.Transport)
+	}
 
 	retryableClient := retryablehttp.NewClient()
 	retryableClient.Logger = logger.WithFields(domain.LoggerFields{"loggerFrom": "http.retryableClient"})
