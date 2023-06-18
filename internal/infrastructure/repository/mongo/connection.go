@@ -3,9 +3,9 @@ package mongo
 import (
 	"context"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/otel"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 	"time"
 )
 
@@ -15,7 +15,7 @@ func Connect(ctx context.Context, baseLogger domain.Logger, uri, database string
 	defer cf()
 
 	mongoOptions := options.Client()
-	mongoOptions.Monitor = otelmongo.NewMonitor()
+	mongoOptions.Monitor = otel.GetMongoMonitor()
 	mongoOptions.ApplyURI(uri)
 
 	client, err := mongo.Connect(ctx, mongoOptions)

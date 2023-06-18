@@ -7,16 +7,18 @@ import (
 	"time"
 )
 
-const ServiceName = "WeatherLoaderComponent"
+const (
+	OtlServiceName = "weather-loader"
+	ServiceName    = "WeatherLoaderComponent"
+)
 
 type Config struct {
 	Environment    string        `required:"true" default:"development"`
 	Port           int           `required:"true" default:"8080"`
 	LogLevel       string        `split_words:"true" default:"DEBUG"`
 	LokiHost       string        `split_words:"true" required:"true"`
-	MongoURI       string        `split_words:"true" required:"true"`
-	MongoDatabase  string        `split_words:"true" required:"true"`
-	MongoTimeout   time.Duration `split_words:"true" required:"true"`
+	Otel           OtelConfig    `split_words:"true" required:"true"`
+	Mongo          MongoConfig   `split_words:"true" required:"true"`
 	TickerLoopTime time.Duration `split_words:"true" default:"60m"`
 	Weather        Weather       `required:"true"`
 }
@@ -33,6 +35,16 @@ type HttpConfig struct {
 	Timeout   time.Duration `default:"10s"`
 	Retries   int           `default:"0"`
 	RetryWait time.Duration `split_words:"true" default:"15s"`
+}
+
+type MongoConfig struct {
+	URI      string        `split_words:"true" required:"true"`
+	Database string        `split_words:"true" required:"true"`
+	Timeout  time.Duration `split_words:"true" required:"true"`
+}
+
+type OtelConfig struct {
+	URL string `split_words:"true" required:"true"`
 }
 
 func LoadConfig() Config {

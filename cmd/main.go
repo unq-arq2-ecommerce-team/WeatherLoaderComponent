@@ -7,17 +7,9 @@ import (
 	infra "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
 	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/otel"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/http"
 	_mongo "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/mongo"
-	"go.opentelemetry.io/otel/propagation"
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"log"
 	"time"
 )
 
@@ -31,14 +23,19 @@ func main() {
 		LokiHost:        conf.LokiHost,
 	})
 
-	mongoDb := _mongo.Connect(context.Background(), logger, conf.MongoURI, conf.MongoDatabase)
+	mongoDb := _mongo.Connect(context.Background(), logger, conf.Mongo.URI, conf.Mongo.Database)
 
 	// OTEL
-	cleanup := initTracerAuto()
-	defer cleanup(context.Background())
+	cleanupFn := otel.InitTracerAuto(logger, conf.Otel, config.OtlServiceName, config.ServiceName)
+	defer func() {
+		err := cleanupFn(context.Background())
+		if err != nil {
+			logger.WithFields(domain.LoggerFields{"error": err}).Errorf("some error found when clean up applied")
+		}
+	}()
 
 	// domain repositories
-	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.MongoTimeout)
+	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.Mongo.Timeout)
 	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
 
 	// use cases
@@ -75,42 +72,4 @@ func createSaveCurrentWeatherUseCase(logger domain.Logger, weatherLocalRepo doma
 	loadCurrentWeatherQuery := app.NewLoadCurrentWeatherUseCase(weatherRemoteRepo)
 	saveWeatherQuery := app.NewSaveWeatherCommand(weatherLocalRepo)
 	return app.NewSaveCurrentWeatherUseCase(logger, loadCurrentWeatherQuery, saveWeatherQuery)
-}
-
-func initTracerAuto() func(context.Context) error {
-
-	exporter, err := otlptrace.New(
-		context.Background(),
-		otlptracegrpc.NewClient(
-			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint("otel-collector:4317"),
-		),
-	)
-
-	if err != nil {
-		log.Fatal("Could not set exporter: ", err)
-	}
-	resources, err := resource.New(
-		context.Background(),
-		resource.WithAttributes(
-			attribute.String("service.name", "weather-loader"),
-			attribute.String("application", "WeatherLoaderComponent"),
-		),
-	)
-	if err != nil {
-		log.Fatal("Could not set resources: ", err)
-	}
-
-	otel.SetTracerProvider(
-		sdktrace.NewTracerProvider(
-			sdktrace.WithSampler(sdktrace.AlwaysSample()),
-			sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(exporter)),
-			sdktrace.WithSyncer(exporter),
-			sdktrace.WithResource(resources),
-		),
-	)
-
-	otel.SetTextMapPropagator(propagation.TraceContext{})
-
-	return exporter.Shutdown
 }
