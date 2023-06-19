@@ -44,7 +44,7 @@ func main() {
 
 	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase)
 
-	_app := infra.NewGinApplication(conf, logger, findCityCurrentTemperatureQuery, getCityDayTemperatureAverageQuery)
+	_app := infra.NewGinApplication(conf, logger, mongoDb.Client(), findCityCurrentTemperatureQuery, getCityDayTemperatureAverageQuery)
 	logger.Fatal(_app.Run())
 }
 

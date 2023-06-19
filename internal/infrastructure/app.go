@@ -11,9 +11,9 @@ import (
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/handlers"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/middleware"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"io"
-	"net/http"
 )
 
 // Application
@@ -34,6 +34,7 @@ type Application interface {
 type ginApplication struct {
 	logger                            domain.Logger
 	config                            config.Config
+	mongoClient                       *mongo.Client
 	findCityCurrentTemperatureQuery   *app.FindCityCurrentTemperatureQuery
 	getCityDayTemperatureAverageQuery *app.GetCityTemperatureAverageQuery
 }
@@ -41,12 +42,14 @@ type ginApplication struct {
 func NewGinApplication(
 	config config.Config,
 	logger domain.Logger,
+	mongoClient *mongo.Client,
 	findCityCurrentTemperatureQuery *app.FindCityCurrentTemperatureQuery,
 	getCityDayTemperatureAverageQuery *app.GetCityTemperatureAverageQuery,
 ) Application {
 	return &ginApplication{
 		logger:                            logger,
 		config:                            config,
+		mongoClient:                       mongoClient,
 		findCityCurrentTemperatureQuery:   findCityCurrentTemperatureQuery,
 		getCityDayTemperatureAverageQuery: getCityDayTemperatureAverageQuery,
 	}
@@ -61,7 +64,7 @@ func (app *ginApplication) Run() error {
 	router := gin.Default()
 	router.Use(otelgin.Middleware(config.OtlServiceName))
 
-	router.GET("/", HealthCheck)
+	router.GET("/", handlers.HealthCheck(app.mongoClient))
 
 	routerApi := router.Group("/api")
 	routerApi.Use(middleware.TracingRequestId())
@@ -73,20 +76,4 @@ func (app *ginApplication) Run() error {
 
 	app.logger.Infof("running http server on port %d, and env %s", app.config.Port, app.config.Environment)
 	return router.Run(fmt.Sprintf(":%v", app.config.Port))
-}
-
-// HealthCheck
-// @Summary Show the status of server.
-// @Description get the status of server.
-// @Tags Health check
-// @Accept */*
-// @Produce json
-// @Success 200 {object} HealthCheckRes
-// @Router / [get]
-func HealthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, HealthCheckRes{Data: "Server is up and running"})
-}
-
-type HealthCheckRes struct {
-	Data string `json:"data"`
 }

@@ -9,9 +9,14 @@ import (
 	"time"
 )
 
+const (
+	defaultMongoConnectionTimeout = 10 * time.Second
+	defaultHealthCheckTimeout     = 5 * time.Second
+)
+
 func Connect(ctx context.Context, baseLogger domain.Logger, uri, database string, otelEnabled bool) *mongo.Database {
 	log := baseLogger.WithFields(domain.LoggerFields{"logger": "mongo", "database": database})
-	ctx, cf := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cf := context.WithTimeout(ctx, defaultMongoConnectionTimeout)
 	defer cf()
 
 	mongoOptions := options.Client()
@@ -34,4 +39,14 @@ func Connect(ctx context.Context, baseLogger domain.Logger, uri, database string
 
 	log.Info("successfully connected to mongo cluster")
 	return client.Database(database)
+}
+
+func HealthCheck(ctx context.Context, mongoClient *mongo.Client) (string, error) {
+	ctx, cf := context.WithTimeout(ctx, defaultHealthCheckTimeout)
+	defer cf()
+	// check connection
+	if err := mongoClient.Ping(ctx, nil); err != nil {
+		return "Mongo db is down", err
+	}
+	return "Mongo db is up and running ok", nil
 }
