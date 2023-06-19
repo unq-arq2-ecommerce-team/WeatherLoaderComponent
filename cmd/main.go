@@ -7,6 +7,7 @@ import (
 	infra "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
 	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
+	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/otel"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/http"
 	_mongo "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/repository/mongo"
 	"time"
@@ -14,18 +15,26 @@ import (
 
 func main() {
 	conf := config.LoadConfig()
+	isIntegrationEnv := conf.IsIntegrationEnv()
+
 	logger := loggerPkg.New(&loggerPkg.Config{
-		ServiceName:     config.ServiceName,
-		EnvironmentName: conf.Environment,
-		LogLevel:        conf.LogLevel,
-		LogFormat:       loggerPkg.JsonFormat,
-		LokiHost:        conf.LokiHost,
+		ServiceName:      config.ServiceName,
+		EnvironmentName:  conf.Environment,
+		IsIntegrationEnv: isIntegrationEnv,
+		LogLevel:         conf.LogLevel,
+		LogFormat:        loggerPkg.JsonFormat,
+		LokiHost:         conf.LokiHost,
 	})
 
-	mongoDb := _mongo.Connect(context.Background(), logger, conf.MongoURI, conf.MongoDatabase)
+	mongoDb := _mongo.Connect(context.Background(), logger, conf.Mongo.URI, conf.Mongo.Database, isIntegrationEnv)
+
+	// OTEL
+	cleanupFn := otel.InitOtelTrace(context.Background(), logger, conf.Otel, isIntegrationEnv)
+	defer cleanupFn()
 
 	// domain repositories
-	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.MongoTimeout)
+	conf.Weather.HttpConfig.OtelEnabled = isIntegrationEnv
+	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.Mongo.Timeout)
 	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
 
 	// use cases

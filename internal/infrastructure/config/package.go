@@ -4,21 +4,31 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	loggerPkg "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
+	"strings"
 	"time"
 )
 
-const ServiceName = "WeatherLoaderComponent"
+const (
+	OtlServiceName = "weather-loader"
+	ServiceName    = "WeatherLoaderComponent"
+
+	EnvDockerCompose = "docker-compose"
+)
 
 type Config struct {
 	Environment    string        `required:"true" default:"development"`
 	Port           int           `required:"true" default:"8080"`
 	LogLevel       string        `split_words:"true" default:"DEBUG"`
 	LokiHost       string        `split_words:"true" required:"true"`
-	MongoURI       string        `split_words:"true" required:"true"`
-	MongoDatabase  string        `split_words:"true" required:"true"`
-	MongoTimeout   time.Duration `split_words:"true" required:"true"`
+	Otel           OtelConfig    `split_words:"true" required:"true"`
+	Mongo          MongoConfig   `split_words:"true" required:"true"`
 	TickerLoopTime time.Duration `split_words:"true" default:"60m"`
 	Weather        Weather       `required:"true"`
+}
+
+// IsIntegrationEnv return true if Enviroment is equal to EnvDockerCompose (no case sensitive)
+func (c Config) IsIntegrationEnv() bool {
+	return strings.EqualFold(c.Environment, EnvDockerCompose)
 }
 
 type Weather struct {
@@ -30,9 +40,20 @@ type Weather struct {
 }
 
 type HttpConfig struct {
-	Timeout   time.Duration `default:"10s"`
-	Retries   int           `default:"0"`
-	RetryWait time.Duration `split_words:"true" default:"15s"`
+	OtelEnabled bool          `required:"true" default:"false"`
+	Timeout     time.Duration `default:"10s"`
+	Retries     int           `default:"0"`
+	RetryWait   time.Duration `split_words:"true" default:"15s"`
+}
+
+type MongoConfig struct {
+	URI      string        `split_words:"true" required:"true"`
+	Database string        `split_words:"true" required:"true"`
+	Timeout  time.Duration `split_words:"true" required:"true"`
+}
+
+type OtelConfig struct {
+	URL string `split_words:"true" required:"true"`
 }
 
 func LoadConfig() Config {

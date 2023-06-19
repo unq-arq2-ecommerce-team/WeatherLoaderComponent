@@ -11,6 +11,7 @@ import (
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/config"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/handlers"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/middleware"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"io"
 	"net/http"
 )
@@ -58,6 +59,8 @@ func (app *ginApplication) Run() error {
 	gin.DefaultWriter = io.Discard
 
 	router := gin.Default()
+	router.Use(otelgin.Middleware(config.OtlServiceName))
+
 	router.GET("/", HealthCheck)
 
 	routerApi := router.Group("/api")
@@ -68,7 +71,7 @@ func (app *ginApplication) Run() error {
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	app.logger.Infof("running http server on port %d", app.config.Port)
+	app.logger.Infof("running http server on port %d, and env %s", app.config.Port, app.config.Environment)
 	return router.Run(fmt.Sprintf(":%v", app.config.Port))
 }
 
