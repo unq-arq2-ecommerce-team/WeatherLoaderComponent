@@ -19,8 +19,8 @@ func NewSaveCurrentWeatherUseCase(baseLogger domain.Logger, loadCurrentWeatherQu
 	}
 }
 
-func (u *SaveCurrentWeatherUseCase) Do(ctx context.Context) error {
-	weather, err := u.LoadCurrentWeatherQuery.Do(ctx)
+func (u *SaveCurrentWeatherUseCase) Do(ctx context.Context, lat, long string) error {
+	weather, err := u.LoadCurrentWeatherQuery.Do(ctx, lat, long)
 	logger := u.baseLogger.WithFields(domain.LoggerFields{"weather": weather})
 	if err != nil {
 		logger.WithFields(domain.LoggerFields{"error": err}).Error("error when get current weather")

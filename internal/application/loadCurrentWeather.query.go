@@ -13,6 +13,6 @@ func NewLoadCurrentWeatherUseCase(weatherRepository domain.WeatherRemoteReposito
 	return &LoadCurrentWeatherQuery{weatherRepository: weatherRepository}
 }
 
-func (u *LoadCurrentWeatherQuery) Do(ctx context.Context) (*domain.Weather, error) {
-	return u.weatherRepository.GetCurrentWeather(ctx)
+func (u *LoadCurrentWeatherQuery) Do(ctx context.Context, lat, long string) (*domain.Weather, error) {
+	return u.weatherRepository.GetCurrentWeather(ctx, lat, long)
 }

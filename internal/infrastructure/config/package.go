@@ -26,17 +26,18 @@ type Config struct {
 	Weather        Weather       `required:"true"`
 }
 
-// IsIntegrationEnv return true if Enviroment is equal to EnvDockerCompose (no case sensitive)
+// IsIntegrationEnv return true if Environment is equal to EnvDockerCompose (no case sensitive)
 func (c Config) IsIntegrationEnv() bool {
 	return strings.EqualFold(c.Environment, EnvDockerCompose)
 }
 
 type Weather struct {
-	ApiUrl     string     `split_words:"true" required:"true"`
-	ApiKey     string     `split_words:"true" required:"true"`
-	Lat        string     `required:"true"`
-	Long       string     `required:"true"`
-	HttpConfig HttpConfig `split_words:"true"`
+	ApiUrl       string     `split_words:"true" required:"true"`
+	GeocodingUrl string     `split_words:"true" required:"true"`
+	ApiKey       string     `split_words:"true" required:"true"`
+	Lat          string     `required:"true"`
+	Long         string     `required:"true"`
+	HttpConfig   HttpConfig `split_words:"true"`
 }
 
 type HttpConfig struct {

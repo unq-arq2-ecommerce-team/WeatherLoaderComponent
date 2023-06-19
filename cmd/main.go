@@ -35,27 +35,27 @@ func main() {
 	// domain repositories
 	conf.Weather.HttpConfig.OtelEnabled = isIntegrationEnv
 	weatherLocalRepository := _mongo.NewWeatherLocalRepository(mongoDb, logger, conf.Mongo.Timeout)
-	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather.ApiKey, conf.Weather.ApiUrl, conf.Weather.Lat, conf.Weather.Long)
+	weatherRemoteRepository := http.NewWeatherRemoteRepository(logger, http.NewClient(logger, conf.Weather.HttpConfig), conf.Weather)
 
 	// use cases
 	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)
-	findCityCurrentTemperatureQuery := app.NewFindCityCurrentTemperatureQuery(weatherLocalRepository)
+	findCityCurrentTemperatureQuery := app.NewFindCityCurrentTemperatureQuery(logger, weatherLocalRepository, weatherRemoteRepository)
 	getCityDayTemperatureAverageQuery := app.NewGetCityTemperatureAverageQuery(weatherLocalRepository)
 
-	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase)
+	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase, conf.Weather.Lat, conf.Weather.Long)
 
 	_app := infra.NewGinApplication(conf, logger, mongoDb.Client(), findCityCurrentTemperatureQuery, getCityDayTemperatureAverageQuery)
 	logger.Fatal(_app.Run())
 }
 
 // startTickerOfSaveCurrentWeatherUseCase init a job which runs periodically use case param every duration of tickerLoopTime param
-func startTickerOfSaveCurrentWeatherUseCase(baseLogger domain.Logger, tickerLoopTime time.Duration, useCase *app.SaveCurrentWeatherUseCase) {
+func startTickerOfSaveCurrentWeatherUseCase(baseLogger domain.Logger, tickerLoopTime time.Duration, useCase *app.SaveCurrentWeatherUseCase, lat, long string) {
 	logger := baseLogger.WithFields(domain.LoggerFields{"logger": "ticker"})
 	ticker := time.NewTicker(tickerLoopTime)
 	logger.Infof("starting ticker loop with loop duration %s", tickerLoopTime.String())
 
 	useCaseDoAndLogErrFn := func() {
-		if err := useCase.Do(context.Background()); err != nil {
+		if err := useCase.Do(context.Background(), lat, long); err != nil {
 			logger.WithFields(domain.LoggerFields{"error": err}).Errorf("Error saving current weather")
 		}
 	}

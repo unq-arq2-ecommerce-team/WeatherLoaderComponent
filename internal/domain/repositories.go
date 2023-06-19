@@ -12,5 +12,6 @@ type WeatherLocalRepository interface {
 }
 
 type WeatherRemoteRepository interface {
-	GetCurrentWeather(context.Context) (*Weather, error)
+	GetCurrentWeather(ctx context.Context, lat, long string) (*Weather, error)
+	GetLatAndLongFromCity(ctx context.Context, city string) (lat, long string, err error)
 }
