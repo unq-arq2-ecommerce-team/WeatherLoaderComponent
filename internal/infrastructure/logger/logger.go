@@ -59,7 +59,6 @@ func New(config *Config) domain.Logger {
 	}
 
 	configure(config)
-	configureHooks(newLogger.logger, config)
 	return newLogger
 }
 
@@ -220,14 +219,6 @@ func collectFields(a map[string]interface{}, b map[string]interface{}) map[strin
 func configure(configuration *Config) {
 	logrus.SetLevel(getLevel(configuration.LogLevel))
 	logrus.SetFormatter(getFormatter(configuration.LogFormat))
-}
-
-// configureHooks append hook into logger if config has IsIntegrationEnv flag true
-func configureHooks(logger *logrus.Logger, conf *Config) {
-	if conf.IsIntegrationEnv {
-		lokiHook := BuildLokiHook(conf)
-		logger.AddHook(lokiHook)
-	}
 }
 
 func getLevel(logLevel string) logrus.Level {
