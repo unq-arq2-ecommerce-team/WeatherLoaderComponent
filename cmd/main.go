@@ -23,7 +23,6 @@ func main() {
 		IsIntegrationEnv: isIntegrationEnv,
 		LogLevel:         conf.LogLevel,
 		LogFormat:        loggerPkg.JsonFormat,
-		LokiHost:         conf.LokiHost,
 	})
 
 	mongoDb := _mongo.Connect(context.Background(), logger, conf.Mongo.URI, conf.Mongo.Database, isIntegrationEnv)
