@@ -62,12 +62,11 @@ func (app *ginApplication) Run() error {
 	gin.DefaultWriter = io.Discard
 
 	router := gin.Default()
-	router.Use(otelgin.Middleware(config.OtlServiceName))
 
 	router.GET("/", handlers.HealthCheck(app.mongoClient))
 
 	routerApi := router.Group("/api")
-	routerApi.Use(middleware.TracingRequestId())
+	routerApi.Use(middleware.TracingRequestId(), otelgin.Middleware(config.OtlServiceName))
 
 	routerApi.GET("/weather/city/:city/temperature", handlers.FindCityCurrentTemperatureHandler(app.logger, app.findCityCurrentTemperatureQuery))
 	routerApi.GET("/weather/city/:city/temperature/average", handlers.GetCityTemperatureAverageHandler(app.logger, app.getCityDayTemperatureAverageQuery))
