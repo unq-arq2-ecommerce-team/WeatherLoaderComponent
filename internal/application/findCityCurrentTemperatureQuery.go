@@ -24,14 +24,15 @@ func (q *FindCityCurrentTemperatureQuery) Do(ctx context.Context, city string) (
 	weather, err := q.weatherLocalRepository.FindCurrentByCity(ctx, city)
 	if err != nil {
 		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when FindCurrentByCity %s from weatherLocalRepository", city)
-		weather, err = q.doFallback(ctx, log, city)
+		weather, err = q.getCurrentWeatherFromExternal(ctx, log, city)
 	}
 	log.Info("successful get current temperature weather with city %s", city)
 	return weather, err
 }
 
-func (q *FindCityCurrentTemperatureQuery) doFallback(ctx context.Context, log domain.Logger, city string) (*domain.Weather, error) {
-	log.Debugf("init fallback")
+// getCurrentWeatherFromExternal is a fallback
+func (q *FindCityCurrentTemperatureQuery) getCurrentWeatherFromExternal(ctx context.Context, log domain.Logger, city string) (*domain.Weather, error) {
+	log.Warn("executing getCurrentWeatherFromExternal with city %s fallback", city)
 	lat, long, err := q.weatherExternalRepository.GetLatAndLongFromCity(ctx, city)
 	if err != nil {
 		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error fallback when GetLatAndLongFromCity %s from weatherExternalRepository", city)
