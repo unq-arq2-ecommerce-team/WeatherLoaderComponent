@@ -40,7 +40,7 @@ func (r *weatherLocalRepository) FindCurrentByCity(ctx context.Context, city str
 	ctxTimeout, cf := context.WithTimeout(ctx, r.timeout)
 	defer cf()
 
-	opts := options.Find().SetSort(bson.D{{"timestamp", -1}})
+	opts := options.Find().SetSort(bson.D{{"timestamp", -1}}).SetLimit(1)
 	cursor, err := r.db.Collection(weatherCollection).Find(ctxTimeout, bson.M{"city": createStringCaseInsensitiveFilter(city)}, opts)
 	if err != nil {
 		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when execute find")
@@ -95,7 +95,7 @@ func (r *weatherLocalRepository) GetAverageTemperatureByCityAndDateRange(ctx con
 
 	avgTemp := &res[0]
 	avgTemp.Set(dateFrom, dateTo)
-	
+
 	log.Infof("successful get average temperature city %s", avgTemp)
 	return avgTemp, nil
 }
