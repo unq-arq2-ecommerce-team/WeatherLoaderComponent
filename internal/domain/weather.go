@@ -39,7 +39,7 @@ type AverageTemperature struct {
 func (a *AverageTemperature) Set(dateFrom, dateTo time.Time) {
 	a.DateFrom = dateFrom
 	a.DateTo = dateTo
-	a.DaysBetween = dateTo.Sub(dateFrom).Hours() / 24
+	a.DaysBetween = GetDaysBetween(dateFrom, dateTo)
 }
 
 func (w Weather) String() string {
