@@ -21,30 +21,30 @@ func TracingRequestId() gin.HandlerFunc {
 
 var totalRequests = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Name: "weather_loader.http_requests_total",
+		Name: "weather_loader_http_requests_total",
 		Help: "Number of get requests.",
 	},
 	[]string{"path", "method"},
 )
 
 var requestsDurationSecondsSum = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "weather_loader.http_request_duration_seconds_sum",
+	Name: "weather_loader_http_request_duration_seconds_sum",
 	Help: "Sum of seconds spent on all requests",
 })
 
 var requestsDurationSecondsCount = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "weather_loader.http_request_duration_seconds_count",
+	Name: "weather_loader_http_request_duration_seconds_count",
 	Help: "Count of  all requests",
 })
 
 var requestsDurationSecondsBucket = prometheus.NewCounterVec(prometheus.CounterOpts{
-	Name: "weather_loader.http_request_duration_seconds_bucket",
+	Name: "weather_loader_http_request_duration_seconds_bucket",
 	Help: "group request by tiem repsonses tags",
 },
 	[]string{"le"})
 
 var httpDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-	Name: "weather_loader.http_response_time_seconds",
+	Name: "weather_loader_http_response_time_seconds",
 	Help: "Duration of HTTP requests.",
 }, []string{"path"})
 
@@ -96,7 +96,7 @@ func incrementRequestOfDuration(d float64) {
 
 var weatherData = promauto.NewGaugeVec(
 	prometheus.GaugeOpts{
-		Name: "weather_loader.weather_temperature",
+		Name: "weather_loader_weather_temperature",
 		Help: "Temperature in Celsius",
 	},
 	[]string{"city", "timestamp"},
