@@ -3,7 +3,6 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/domain"
 	"github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/internal/infrastructure/logger"
 	"time"
@@ -94,7 +93,7 @@ func incrementRequestOfDuration(d float64) {
 	}
 }
 
-var weatherData = promauto.NewGaugeVec(
+var weatherData = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Name: "weather_loader_weather_temperature",
 		Help: "Temperature in Celsius",
