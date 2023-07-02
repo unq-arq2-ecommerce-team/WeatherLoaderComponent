@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	swaggerDocs "github.com/unq-arq2-ecommerce-team/WeatherLoaderComponent/docs"
@@ -67,6 +68,7 @@ func (app *ginApplication) Run() error {
 	router := gin.Default()
 
 	router.GET("/", handlers.HealthCheck(app.mongoClient))
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	routerApi := router.Group("/api")
 
