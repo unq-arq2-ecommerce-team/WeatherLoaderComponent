@@ -100,6 +100,30 @@ func (r *weatherLocalRepository) GetAverageTemperatureByCityAndDateRange(ctx con
 	return avgTemp, nil
 }
 
+func (r *weatherLocalRepository) FindAllWeathers(ctx context.Context) (*[]domain.Weather, error) {
+	log := r.logger.WithRequestId(ctx)
+	log.Debugf("init find all weathers...")
+	ctxTimeout, cf := context.WithTimeout(ctx, r.timeout)
+	defer cf()
+
+	opts := options.Find().SetSort(bson.D{{"timestamp", -1}}).SetLimit(1)
+	cursor, err := r.db.Collection(weatherCollection).Find(ctxTimeout, bson.M{}, opts)
+	if err != nil {
+		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when execute find")
+		return nil, err
+	}
+
+	var results []domain.Weather
+	if err = cursor.All(ctxTimeout, &results); err != nil {
+		log.WithFields(domain.LoggerFields{"error": err}).Errorf("error when read cursor")
+		return nil, err
+	}
+
+	log.Infof("successful find all weathers")
+
+	return &results, nil
+}
+
 func (r *weatherLocalRepository) createIndexes() {
 	ctxTimeout, cf := context.WithTimeout(context.Background(), r.timeout)
 	defer cf()

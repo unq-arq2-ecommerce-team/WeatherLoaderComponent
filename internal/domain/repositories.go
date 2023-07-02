@@ -9,6 +9,7 @@ type WeatherLocalRepository interface {
 	Save(context.Context, *Weather) error
 	FindCurrentByCity(ctx context.Context, city string) (*Weather, error)
 	GetAverageTemperatureByCityAndDateRange(ctx context.Context, city string, dateFrom, dateTo time.Time) (*AverageTemperature, error)
+	FindAllWeathers(ctx context.Context) (*[]Weather, error)
 }
 
 type WeatherRemoteRepository interface {

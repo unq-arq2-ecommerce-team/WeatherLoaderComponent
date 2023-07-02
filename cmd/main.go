@@ -40,10 +40,11 @@ func main() {
 	saveCurrentWeatherUseCase := createSaveCurrentWeatherUseCase(logger, weatherLocalRepository, weatherRemoteRepository)
 	findCityCurrentTemperatureQuery := app.NewFindCityCurrentTemperatureQuery(logger, weatherLocalRepository, weatherRemoteRepository)
 	getCityDayTemperatureAverageQuery := app.NewGetCityTemperatureAverageQuery(weatherLocalRepository)
+	getFindAllWeathersQuery := app.NewGetFindAllWeathersQuery(weatherLocalRepository)
 
 	go startTickerOfSaveCurrentWeatherUseCase(logger, conf.TickerLoopTime, saveCurrentWeatherUseCase, conf.Weather.Lat, conf.Weather.Long)
 
-	_app := infra.NewGinApplication(conf, logger, mongoDb.Client(), findCityCurrentTemperatureQuery, getCityDayTemperatureAverageQuery)
+	_app := infra.NewGinApplication(conf, logger, mongoDb.Client(), findCityCurrentTemperatureQuery, getCityDayTemperatureAverageQuery, getFindAllWeathersQuery)
 	logger.Fatal(_app.Run())
 }
 

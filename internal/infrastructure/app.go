@@ -37,6 +37,7 @@ type ginApplication struct {
 	mongoClient                       *mongo.Client
 	findCityCurrentTemperatureQuery   *app.FindCityCurrentTemperatureQuery
 	getCityDayTemperatureAverageQuery *app.GetCityTemperatureAverageQuery
+	getFindAllWeathersQuery           *app.GetFindAllWeathersQuery
 }
 
 func NewGinApplication(
@@ -45,6 +46,7 @@ func NewGinApplication(
 	mongoClient *mongo.Client,
 	findCityCurrentTemperatureQuery *app.FindCityCurrentTemperatureQuery,
 	getCityDayTemperatureAverageQuery *app.GetCityTemperatureAverageQuery,
+	getFindAllWeathersQuery *app.GetFindAllWeathersQuery,
 ) Application {
 	return &ginApplication{
 		logger:                            logger,
@@ -52,6 +54,7 @@ func NewGinApplication(
 		mongoClient:                       mongoClient,
 		findCityCurrentTemperatureQuery:   findCityCurrentTemperatureQuery,
 		getCityDayTemperatureAverageQuery: getCityDayTemperatureAverageQuery,
+		getFindAllWeathersQuery:           getFindAllWeathersQuery,
 	}
 }
 
@@ -66,10 +69,14 @@ func (app *ginApplication) Run() error {
 	router.GET("/", handlers.HealthCheck(app.mongoClient))
 
 	routerApi := router.Group("/api")
-	routerApi.Use(middleware.TracingRequestId(), otelgin.Middleware(config.OtlServiceName))
+
+	middleware.InitMetrics()
+	routerApi.Use(middleware.TracingRequestId(), middleware.PrometheusMiddleware(), otelgin.Middleware(config.OtlServiceName))
 
 	routerApi.GET("/weather/city/:city/temperature", handlers.FindCityCurrentTemperatureHandler(app.logger, app.findCityCurrentTemperatureQuery))
 	routerApi.GET("/weather/city/:city/temperature/average", handlers.GetCityTemperatureAverageHandler(app.logger, app.getCityDayTemperatureAverageQuery))
+
+	routerApi.GET("/weather/metrics/collector", handlers.CollectWeatherMetricsHandler(app.logger, app.getFindAllWeathersQuery))
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
